@@ -1,0 +1,38 @@
+{
+  "name": "catalive",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "CatAlive — il tuo cinema personale: media server privato per film e serie TV",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "dev": "concurrently -k -n SERVER,CLIENT -c blue,magenta \"npm:dev:server\" \"npm:dev:client\"",
+    "dev:server": "nodemon --quiet --watch server server/index.js",
+    "dev:client": "vite",
+    "build": "vite build",
+    "start": "node server/index.js",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "cookie-parser": "^1.4.6",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "jsonwebtoken": "^9.0.2",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^6.26.2"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.3.2",
+    "autoprefixer": "^10.4.20",
+    "concurrently": "^8.2.2",
+    "nodemon": "^3.1.7",
+    "postcss": "^8.4.47",
+    "tailwindcss": "^3.4.13",
+    "vite": "^5.4.8"
+  }
+}

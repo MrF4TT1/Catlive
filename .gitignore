@@ -1,0 +1,23 @@
+node_modules/
+dist/
+.env
+data/
+*.log
+.DS_Store
+
+# --- File personali / media reali: NON committare nel repo del deploy demo ---
+# (restano sul tuo disco per l'uso locale dell'app)
+film/
+serie/
+1Account.txt
+*.mp4
+*.mkv
+*.avi
+*.mov
+*.m4v
+*.webm
+*.mpg
+*.mpeg
+*.ts
+*.wmv
+*.flv
