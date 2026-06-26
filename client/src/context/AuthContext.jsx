@@ -8,12 +8,16 @@ export function AuthProvider({ children }) {
   const [profiles, setProfiles] = useState([])
   const [profile, setProfile] = useState(null)
   const [demo, setDemo] = useState(false)
+  const [maxUploadMb, setMaxUploadMb] = useState(500)
   const [loading, setLoading] = useState(true)
 
   const refresh = useCallback(async () => {
     api
       .get('/auth/status')
-      .then((s) => setDemo(!!s.demo))
+      .then((s) => {
+        setDemo(!!s.demo)
+        if (s.maxUploadMb) setMaxUploadMb(s.maxUploadMb)
+      })
       .catch(() => {})
     try {
       const me = await api.get('/auth/me')
@@ -54,7 +58,7 @@ export function AuthProvider({ children }) {
 
   return (
     <AuthContext.Provider
-      value={{ user, profiles, profile, demo, loading, refresh, selectProfile, setProfiles, logout }}
+      value={{ user, profiles, profile, demo, maxUploadMb, loading, refresh, selectProfile, setProfiles, logout }}
     >
       {children}
     </AuthContext.Provider>

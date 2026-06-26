@@ -46,6 +46,7 @@ r.get('/status', (req, res) => {
   res.json({
     needsSetup: db.users.length === 0,
     demo,
+    maxUploadMb: parseInt(process.env.MAX_UPLOAD_MB || '500', 10),
     ...(demo ? { demoCreds: { username: 'demo', password: 'demo' } } : {}),
   })
 })

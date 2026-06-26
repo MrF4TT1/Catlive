@@ -54,3 +54,11 @@ export function requireAuth(req, res, next) {
   req.user = user
   next()
 }
+
+// Richiede ruolo amministratore (difesa in profondità sulle rotte di scrittura).
+export function requireAdmin(req, res, next) {
+  if (!req.user || req.user.role !== 'admin') {
+    return res.status(403).json({ error: 'Permessi insufficienti' })
+  }
+  next()
+}

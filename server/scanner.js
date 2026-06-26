@@ -9,7 +9,7 @@ const VIDEO_EXT = new Set([
 // Tag di qualità/encoding da rimuovere dai titoli ricavati dai nomi file.
 const JUNK = /\b(1080p|720p|2160p|480p|4k|uhd|x264|x265|h264|h265|hevc|xvid|divx|bluray|blu-ray|brrip|bdrip|webrip|web-dl|webdl|hdrip|dvdrip|hdtv|remux|proper|repack|aac|ac3|dts|dd5\.?1|truehd|atmos|10bit|hdr|ita|eng|sub|multi)\b/gi
 
-function idFor(str) {
+export function idFor(str) {
   return createHash('sha1').update(str).digest('hex').slice(0, 16)
 }
 
@@ -56,7 +56,7 @@ function parseEpisode(base) {
   return { season: parseInt(m[1], 10), episode: parseInt(m[2], 10), index: m.index, length: m[0].length }
 }
 
-function parseFile(filePath, libraryType) {
+export function parseFile(filePath, libraryType) {
   const base = path.basename(filePath)
   const yearMatch = base.match(/\b(19|20)\d{2}\b/)
   const year = yearMatch ? parseInt(yearMatch[0], 10) : null

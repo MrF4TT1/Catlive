@@ -1,5 +1,6 @@
-# Render Blueprint — deploy "1 clic" di CatAlive (piano gratuito).
+# Render Blueprint — CatAlive istanza privata (a singolo amministratore).
 # Su https://dashboard.render.com → New → Blueprint → collega il repo GitHub.
+# I valori "sync: false" vanno inseriti TU nella dashboard di Render (sono segreti).
 services:
   - type: web
     name: catalive
@@ -14,7 +15,27 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
-      - key: DEMO_MODE
-        value: "true"
+      - key: NODE_VERSION
+        value: "20" # l'AWS SDK (R2) richiede Node >= 20
       - key: JWT_SECRET
-        generateValue: true
+        generateValue: true # generato e mantenuto da Render
+
+      # --- Il TUO accesso amministratore (inseriscili nella dashboard Render) ---
+      - key: ADMIN_USERNAME
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
+
+      # --- Database persistente: stringa di connessione Neon (Postgres) ---
+      - key: DATABASE_URL
+        sync: false
+
+      # --- Archiviazione video: Cloudflare R2 (S3-compatibile) ---
+      - key: R2_ACCOUNT_ID
+        sync: false
+      - key: R2_ACCESS_KEY_ID
+        sync: false
+      - key: R2_SECRET_ACCESS_KEY
+        sync: false
+      - key: R2_BUCKET
+        sync: false

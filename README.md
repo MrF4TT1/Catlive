@@ -7,19 +7,23 @@ ma completamente self-hosted e dedicato ai *tuoi* contenuti.
 ## Funzionalità
 
 - 🔐 **Autenticazione sicura** — login con password (hash bcrypt) e sessione via cookie httpOnly + JWT.
-- 👥 **Profili multipli** — ogni profilo ha il proprio stato di visione.
-- 📁 **Librerie da cartelle locali** — colleghi una cartella del server e CatAlive la scansiona.
+- 👤 **Singolo amministratore** — niente registrazione pubblica: accedi solo tu (`ADMIN_USERNAME`/`ADMIN_PASSWORD`).
+- 📁 **Librerie** — da cartelle locali (self-host) **oppure** caricando i file dall'area admin (cloud).
+- ⬆️ **Upload** dei video direttamente dall'interfaccia (con barra di avanzamento).
 - 🎬 **Catalogazione automatica** — riconosce film e serie TV (stagioni/episodi) dai nomi dei file.
-- 🔎 **Ricerca** in tutta la libreria.
-- ▶️ **Streaming** con supporto alle richieste *HTTP Range* (seek, ripresa).
-- ⏯️ **Continua a guardare** — riprende dal punto in cui avevi interrotto.
+- 🔎 **Ricerca** · ▶️ **Streaming** con *HTTP Range* · ⏯️ **Continua a guardare**.
 
-## Stack
+## Stack & modalità
 
-- **Backend**: Node.js + Express (ESM) — nessuna dipendenza nativa.
-- **Frontend**: React + Vite + Tailwind CSS.
-- **Dati**: store su file JSON (`data/db.json`) con livello di accesso astratto
-  (facile da migrare a SQLite in seguito).
+- **Backend**: Node.js + Express (ESM). **Frontend**: React + Vite + Tailwind.
+- **Database** (adattivo):
+  - **Postgres/Neon** se è impostata `DATABASE_URL` (persistente, consigliato in cloud);
+  - altrimenti **file locale** `data/db.json` (sviluppo/self-host).
+- **Storage video** (adattivo):
+  - **Cloudflare R2** se sono impostate le variabili `R2_*` (persistente, 10 GB gratis);
+  - altrimenti **disco locale** `data/uploads` (sviluppo/self-host).
+
+➡️ Per pubblicarla online come istanza privata persistente, vedi **[DEPLOY.md](DEPLOY.md)**.
 
 ## Avvio rapido
 

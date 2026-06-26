@@ -19,6 +19,32 @@ const S = {
 }
 
 /**
+ * Crea l'unico account amministratore dalle variabili d'ambiente
+ * (ADMIN_USERNAME / ADMIN_PASSWORD), se non esiste già nessun utente.
+ * Così l'istanza privata ha subito il TUO accesso, senza registrazione pubblica.
+ */
+export function seedAdminFromEnv() {
+  const username = process.env.ADMIN_USERNAME
+  const password = process.env.ADMIN_PASSWORD
+  if (!username || !password) return
+  const db = loadDb()
+  if (db.users.length > 0) return
+
+  const now = Date.now()
+  const user = {
+    id: randomUUID(),
+    username: String(username).trim(),
+    password: hashPassword(password),
+    role: 'admin',
+    createdAt: now,
+  }
+  db.users.push(user)
+  db.profiles.push({ id: randomUUID(), userId: user.id, name: user.username, avatar: '🐱', createdAt: now })
+  saveDb()
+  console.log(`[CatAlive] Account amministratore "${user.username}" creato da variabili d'ambiente.`)
+}
+
+/**
  * In modalità demo (DEMO_MODE=true) precarica un account "demo/demo" e un
  * catalogo di esempio se il database è vuoto. È idempotente: utile su host con
  * disco effimero (es. piano gratuito Render) dove i dati si azzerano ad ogni riavvio.

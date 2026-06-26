@@ -3,6 +3,7 @@ import fs from 'fs'
 import path from 'path'
 import { loadDb } from '../store.js'
 import { requireAuth } from '../auth.js'
+import { storageMode, presignGet, localPath } from '../storage.js'
 
 const r = Router()
 
@@ -32,20 +33,29 @@ function isAllowedDemoUrl(url) {
   }
 }
 
-// Trova la sorgente riproducibile (film o singolo episodio):
-// un file locale ({ file }) oppure un URL remoto demo ({ url }).
+// Sorgente riproducibile (film o singolo episodio). Può essere:
+// - { url }     → contenuto demo a licenza libera (redirect)
+// - { key }     → file caricato dall'utente (R2 o disco locale)
+// - { file }    → file su cartella locale scansionata (self-host)
+function sourceOf(m) {
+  if (m.demoUrl) return { url: m.demoUrl }
+  if (m.storageKey) return { key: m.storageKey }
+  if (m.path) return { file: m.path }
+  return null
+}
+
 function resolveSource(db, id) {
   for (const m of db.media) {
-    if (m.type === 'movie' && m.id === id) return m.demoUrl ? { url: m.demoUrl } : { file: m.path }
+    if (m.type === 'movie' && m.id === id) return sourceOf(m)
     if (m.type === 'show') {
       const ep = m.episodes.find((e) => e.id === id)
-      if (ep) return ep.demoUrl ? { url: ep.demoUrl } : { file: ep.path }
+      if (ep) return sourceOf(ep)
     }
   }
   return null
 }
 
-r.get('/:id', requireAuth, (req, res) => {
+r.get('/:id', requireAuth, async (req, res) => {
   const db = loadDb()
   const source = resolveSource(db, req.params.id)
   if (!source) return res.status(404).json({ error: 'Contenuto non trovato' })
@@ -56,11 +66,31 @@ r.get('/:id', requireAuth, (req, res) => {
     return res.redirect(302, source.url)
   }
 
-  const file = source.file
+  // File caricato dall'utente: su R2 si firma un URL temporaneo e si reindirizza;
+  // in locale si serve direttamente dal disco uploads.
+  let file
+  if (source.key) {
+    if (storageMode() === 'r2') {
+      try {
+        return res.redirect(302, await presignGet(source.key))
+      } catch (e) {
+        console.error('[CatAlive] presign error:', e.message)
+        return res.status(502).json({ error: 'Sorgente non disponibile' })
+      }
+    }
+    file = localPath(source.key)
+  } else {
+    file = source.file
+  }
+
   if (!file || !fs.existsSync(file)) return res.status(404).json({ error: 'File non trovato' })
 
+  // Difesa in profondità: dal disco si servono solo file con estensione video nota.
+  const ext = path.extname(file).toLowerCase()
+  if (!MIME[ext]) return res.status(415).json({ error: 'Tipo di file non supportato' })
+
   const stat = fs.statSync(file)
-  const type = MIME[path.extname(file).toLowerCase()] || 'application/octet-stream'
+  const type = MIME[ext]
   const range = req.headers.range
 
   if (range) {
