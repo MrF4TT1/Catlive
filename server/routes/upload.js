@@ -54,8 +54,8 @@ r.post('/', requireAdmin, upload.single('file'), async (req, res) => {
     await putFile(key, file.path, file.mimetype)
   } catch (e) {
     fs.unlink(file.path, () => {})
-    console.error('[CatAlive] Upload storage error:', e.message)
-    return res.status(500).json({ error: 'Errore durante il salvataggio del file' })
+    console.error('[CatAlive] Upload storage error:', e)
+    return res.status(500).json({ error: 'Errore salvataggio file: ' + (e.message || 'sconosciuto') })
   }
 
   // Cataloga in base al nome file (film oppure episodio di una serie).

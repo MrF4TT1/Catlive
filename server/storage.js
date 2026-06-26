@@ -33,6 +33,10 @@ export async function initStorage() {
         accessKeyId: process.env.R2_ACCESS_KEY_ID,
         secretAccessKey: process.env.R2_SECRET_ACCESS_KEY,
       },
+      // Cloudflare R2 non supporta i checksum automatici introdotti nelle versioni
+      // recenti dell'AWS SDK (>= 3.729): senza questo ogni upload fallisce.
+      requestChecksumCalculation: 'WHEN_REQUIRED',
+      responseChecksumValidation: 'WHEN_REQUIRED',
     })
     bucket = process.env.R2_BUCKET
     mode = 'r2'
