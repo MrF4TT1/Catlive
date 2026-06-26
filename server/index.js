@@ -17,6 +17,7 @@ import coverRoutes from './routes/cover.js'
 import { seedDemo, seedAdminFromEnv } from './seed.js'
 import { initStore, flushDb } from './store.js'
 import { initStorage } from './storage.js'
+import { migrate } from './migrate.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const ROOT = path.resolve(__dirname, '..')
@@ -68,6 +69,7 @@ async function start() {
 
   seedAdminFromEnv() // crea l'admin unico da ADMIN_USERNAME/ADMIN_PASSWORD (se assente)
   seedDemo() // precarica i dati demo se DEMO_MODE=true
+  migrate() // sistema cataloghi vecchi (serie/anime erroneamente come film)
 
   const server = app.listen(PORT, () => {
     console.log(`\n🐾 CatAlive server attivo → http://localhost:${PORT}`)

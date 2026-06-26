@@ -12,8 +12,20 @@ export default function Player() {
   const parentId = searchParams.get('parent') || id
   const restart = searchParams.get('restart') === '1'
   const videoRef = useRef(null)
+  const nextIdRef = useRef(null)
   const [warn, setWarn] = useState('')
   const [loading, setLoading] = useState(true)
+
+  // Trova il prossimo episodio (per l'autoplay a fine episodio).
+  useEffect(() => {
+    nextIdRef.current = null
+    if (!parentId || parentId === id) return
+    api.get('/media/' + parentId).then((d) => {
+      if (d.type !== 'show' || !d.episodes) return
+      const idx = d.episodes.findIndex((e) => e.id === id)
+      if (idx >= 0 && idx + 1 < d.episodes.length) nextIdRef.current = d.episodes[idx + 1].id
+    }).catch(() => {})
+  }, [id, parentId])
 
   // Riprendi dalla posizione salvata (a meno di "da capo").
   useEffect(() => {
@@ -40,7 +52,10 @@ export default function Player() {
         position: v.currentTime, duration: v.duration || 0, finished,
       }).catch(() => {})
     const onTime = () => { if (v.currentTime - last >= 5) { last = v.currentTime; save(false) } }
-    const onEnded = () => save(true)
+    const onEnded = () => {
+      save(true)
+      if (nextIdRef.current) navigate(`/watch/${nextIdRef.current}?parent=${parentId}`)
+    }
     const onError = () => setWarn('Impossibile riprodurre questo file nel browser (formati come .mkv/.avi richiedono transcodifica).')
     v.addEventListener('timeupdate', onTime)
     v.addEventListener('ended', onEnded)
@@ -74,6 +89,7 @@ export default function Player() {
         </div>
       )}
       <video
+        key={id}
         ref={videoRef}
         src={'/api/stream/' + id}
         controls

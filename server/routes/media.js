@@ -17,10 +17,11 @@ function summary(m, catById) {
     hasPoster: !!m.posterKey,
   }
   if (m.type === 'movie') {
-    return { ...base, type: 'movie', playableId: m.id }
+    return { ...base, type: 'movie', playableId: m.id, previewId: m.id }
   }
   const seasons = new Set(m.episodes.map((e) => e.season))
-  return { ...base, type: 'show', episodeCount: m.episodes.length, seasonCount: seasons.size }
+  const first = m.episodes[0]
+  return { ...base, type: 'show', episodeCount: m.episodes.length, seasonCount: seasons.size, previewId: first ? first.id : null }
 }
 
 function categoryMap(db) {

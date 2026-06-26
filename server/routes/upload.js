@@ -7,7 +7,7 @@ import { randomUUID } from 'crypto'
 import { loadDb, saveDb } from '../store.js'
 import { requireAuth, requireAdmin } from '../auth.js'
 import { putFile } from '../storage.js'
-import { parseFile, idFor } from '../scanner.js'
+import { parseFile, parseEpisodeNumber, clean, idFor } from '../scanner.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const TMP_DIR = path.resolve(__dirname, '..', '..', 'data', 'tmp')
@@ -58,47 +58,50 @@ r.post('/', requireAdmin, upload.single('file'), async (req, res) => {
     return res.status(500).json({ error: 'Errore salvataggio file: ' + (e.message || 'sconosciuto') })
   }
 
-  // Cataloga in base al nome file (film oppure episodio di una serie).
-  const parsed = parseFile(file.originalname, lib.type)
+  // Categoria/tipo della libreria decidono come catalogare.
+  const isSeries = lib.type === 'show' || lib.category === 'serie' || lib.category === 'anime'
+  const isMovie = lib.type === 'movie' || lib.category === 'film'
+
   let result
-  if (parsed.kind === 'movie') {
-    const item = {
-      id: idFor(key),
-      libraryId: lib.id,
-      type: 'movie',
-      title: parsed.title,
-      year: parsed.year,
-      storageKey: key,
-      size: file.size,
-      addedAt: Date.now(),
+  if (isSeries) {
+    // Una libreria Serie/Anime = UNA serie sola: tutti i file diventano episodi.
+    const showId = idFor(lib.id + '|show')
+    let show = db.media.find((m) => m.type === 'show' && m.id === showId)
+    if (!show) {
+      show = { id: showId, libraryId: lib.id, type: 'show', title: lib.name, episodes: [], addedAt: Date.now() }
+      db.media.push(show)
     }
+    const pe = parseEpisodeNumber(file.originalname)
+    const season = pe?.season || 1
+    const episode = pe?.episode || show.episodes.length + 1
+    let title = clean(file.originalname)
+    if (!title || /^\d{1,3}$/.test(title)) title = `Episodio ${episode}`
+    show.episodes.push({ id: idFor(key), season, episode, title, storageKey: key, size: file.size })
+    show.episodes.sort((a, b) => a.season - b.season || a.episode - b.episode)
+    result = show
+  } else if (isMovie) {
+    const parsed = parseFile(file.originalname, 'movie')
+    const item = { id: idFor(key), libraryId: lib.id, type: 'movie', title: parsed.title, year: parsed.year, storageKey: key, size: file.size, addedAt: Date.now() }
     db.media.push(item)
     result = item
   } else {
-    const showKey = lib.id + '|' + parsed.showTitle.toLowerCase()
-    let show = db.media.find((m) => m.type === 'show' && m.id === idFor(showKey))
-    if (!show) {
-      show = {
-        id: idFor(showKey),
-        libraryId: lib.id,
-        type: 'show',
-        title: parsed.showTitle,
-        year: parsed.year,
-        episodes: [],
-        addedAt: Date.now(),
+    // Misto: rilevamento automatico (film oppure episodio raggruppato per titolo).
+    const parsed = parseFile(file.originalname, lib.type)
+    if (parsed.kind === 'movie') {
+      const item = { id: idFor(key), libraryId: lib.id, type: 'movie', title: parsed.title, year: parsed.year, storageKey: key, size: file.size, addedAt: Date.now() }
+      db.media.push(item)
+      result = item
+    } else {
+      const showId = idFor(lib.id + '|' + parsed.showTitle.toLowerCase())
+      let show = db.media.find((m) => m.type === 'show' && m.id === showId)
+      if (!show) {
+        show = { id: showId, libraryId: lib.id, type: 'show', title: parsed.showTitle, year: parsed.year, episodes: [], addedAt: Date.now() }
+        db.media.push(show)
       }
-      db.media.push(show)
+      show.episodes.push({ id: idFor(key), season: parsed.season, episode: parsed.episode, title: parsed.title, storageKey: key, size: file.size })
+      show.episodes.sort((a, b) => a.season - b.season || a.episode - b.episode)
+      result = show
     }
-    show.episodes.push({
-      id: idFor(key),
-      season: parsed.season,
-      episode: parsed.episode,
-      title: parsed.title,
-      storageKey: key,
-      size: file.size,
-    })
-    show.episodes.sort((a, b) => a.season - b.season || a.episode - b.episode)
-    result = show
   }
 
   // Attende la persistenza PRIMA di rispondere: evita metadati persi (file orfano su R2)

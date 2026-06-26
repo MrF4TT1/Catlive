@@ -29,7 +29,7 @@ function walk(dir, out = []) {
   return out
 }
 
-function clean(name) {
+export function clean(name) {
   return name
     .replace(/\.[a-z0-9]+$/i, '')   // estensione
     .replace(/[._]+/g, ' ')          // punti/underscore -> spazi
@@ -54,6 +54,21 @@ function parseEpisode(base) {
     base.match(/\b(\d{1,2})x(\d{1,3})\b/)
   if (!m) return null
   return { season: parseInt(m[1], 10), episode: parseInt(m[2], 10), index: m.index, length: m[0].length }
+}
+
+// Estrae stagione/episodio in modo "tollerante": S01E02, 1x02, "Ep 5", "E05",
+// numero iniziale ("01 - titolo", "02.mp4") o qualsiasi numero presente.
+export function parseEpisodeNumber(base) {
+  const name = base.replace(/\.[a-z0-9]+$/i, '')
+  const se = name.match(/[sS](\d{1,2})[\s._-]*[eE](\d{1,3})/) || name.match(/\b(\d{1,2})x(\d{1,3})\b/)
+  if (se) return { season: parseInt(se[1], 10), episode: parseInt(se[2], 10) }
+  const ep = name.match(/\b(?:ep|episodio|episode|e)[\s._-]*(\d{1,3})\b/i)
+  if (ep) return { season: 1, episode: parseInt(ep[1], 10) }
+  const lead = name.match(/^\s*(\d{1,3})(?:\D|$)/)
+  if (lead) return { season: 1, episode: parseInt(lead[1], 10) }
+  const any = name.match(/(\d{1,3})/)
+  if (any) return { season: 1, episode: parseInt(any[1], 10) }
+  return null
 }
 
 export function parseFile(filePath, libraryType) {
