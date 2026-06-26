@@ -32,10 +32,7 @@ export default function Setup() {
         <Field label="Password" type="password" value={form.password} onChange={(v) => setForm({ ...form, password: v })} />
         <Field label="Nome profilo" placeholder="(opzionale)" value={form.profileName} onChange={(v) => setForm({ ...form, profileName: v })} />
         {error && <p className="text-red-400 text-sm">{error}</p>}
-        <button
-          disabled={busy}
-          className="w-full bg-brand-600 hover:bg-brand-500 py-2.5 rounded font-semibold disabled:opacity-50"
-        >
+        <button disabled={busy} className="btn-neon w-full disabled:opacity-50">
           {busy ? 'Creazione…' : 'Crea account'}
         </button>
       </form>

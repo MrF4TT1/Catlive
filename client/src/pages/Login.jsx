@@ -63,10 +63,7 @@ export default function Login() {
         <Field label="Username" value={form.username} onChange={(v) => setForm({ ...form, username: v })} />
         <Field label="Password" type="password" value={form.password} onChange={(v) => setForm({ ...form, password: v })} />
         {error && <p className="text-red-400 text-sm">{error}</p>}
-        <button
-          disabled={busy}
-          className="w-full bg-white/10 hover:bg-white/20 py-2.5 rounded font-semibold disabled:opacity-50"
-        >
+        <button disabled={busy} className="btn-neon w-full disabled:opacity-50">
           {busy ? 'Accesso…' : 'Accedi'}
         </button>
       </form>

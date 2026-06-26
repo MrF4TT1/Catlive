@@ -38,7 +38,7 @@ r.get('/continue', (req, res) => {
     seen.add(p.parentId)
     const media = db.media.find((m) => m.id === p.parentId)
     if (!media) continue
-    out.push({ ...p, title: media.title, type: media.type })
+    out.push({ ...p, title: media.title, type: media.type, hasPoster: !!media.posterKey })
   }
   res.json(out.slice(0, 20))
 })

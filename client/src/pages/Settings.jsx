@@ -1,15 +1,15 @@
 import { useEffect, useRef, useState } from 'react'
 import { api } from '../api.js'
 import { useAuth } from '../context/AuthContext.jsx'
+import Icon from '../components/Icon.jsx'
+import { CATEGORIES, catLabel, catIcon } from '../lib/categories.js'
 
-// Upload con barra di avanzamento (XHR per avere il progresso, che fetch non offre).
-// onProgress riceve (percent, phase) dove phase è 'upload' o 'finalize'.
 function uploadFile(file, libraryId, onProgress) {
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest()
     xhr.open('POST', '/api/upload')
     xhr.withCredentials = true
-    xhr.timeout = 1000 * 60 * 30 // 30 min
+    xhr.timeout = 1000 * 60 * 30
     xhr.upload.onprogress = (e) => {
       if (e.lengthComputable) {
         const pct = Math.round((e.loaded / e.total) * 100)
@@ -20,13 +20,13 @@ function uploadFile(file, libraryId, onProgress) {
       let data = {}
       try { data = JSON.parse(xhr.responseText) } catch { /* */ }
       if (xhr.status >= 200 && xhr.status < 300) resolve(data)
-      else if (xhr.status === 413) reject(new Error(data.error || 'File troppo grande per questo piano'))
-      else if (xhr.status === 502 || xhr.status === 504) reject(new Error('Il server non ha confermato il salvataggio (file forse troppo grande/lento per il piano gratuito)'))
+      else if (xhr.status === 413) reject(new Error(data.error || 'File troppo grande'))
+      else if (xhr.status === 502 || xhr.status === 504) reject(new Error('Il server non ha confermato il salvataggio (file forse troppo grande per il piano gratuito)'))
       else reject(new Error(data.error || `Errore (${xhr.status})`))
     }
-    xhr.onerror = () => reject(new Error('Errore di rete o file troppo grande per il piano gratuito'))
+    xhr.onerror = () => reject(new Error('Errore di rete o file troppo grande'))
     xhr.upload.onerror = () => reject(new Error('Errore di rete durante il caricamento'))
-    xhr.ontimeout = () => reject(new Error('Tempo scaduto: il file potrebbe essere troppo grande'))
+    xhr.ontimeout = () => reject(new Error('Tempo scaduto: file forse troppo grande'))
     const form = new FormData()
     form.append('libraryId', libraryId)
     form.append('file', file)
@@ -37,184 +37,129 @@ function uploadFile(file, libraryId, onProgress) {
 export default function Settings() {
   const { demo, maxUploadMb } = useAuth()
   const [libs, setLibs] = useState([])
-  const [form, setForm] = useState({ name: '', type: 'mixed', path: '' })
+  const [form, setForm] = useState({ name: '', type: 'mixed', category: 'serie', path: '' })
   const [showAdvanced, setShowAdvanced] = useState(false)
   const [msg, setMsg] = useState('')
   const [busy, setBusy] = useState(false)
-  const [uploads, setUploads] = useState({}) // { libraryId: { name, percent, phase } }
+  const [uploads, setUploads] = useState({})
   const fileInputs = useRef({})
 
   const load = () => api.get('/libraries').then(setLibs).catch(() => {})
   useEffect(() => { load() }, [])
 
   const addLibrary = async (e) => {
-    e.preventDefault()
-    setBusy(true)
-    setMsg('')
+    e.preventDefault(); setBusy(true); setMsg('')
     try {
-      const payload = { name: form.name, type: form.type }
+      const payload = { name: form.name, type: form.type, category: form.category }
       if (form.path.trim()) payload.path = form.path.trim()
       const lib = await api.post('/libraries', payload)
-      setForm({ name: '', type: 'mixed', path: '' })
-      setMsg(`Libreria "${lib.name}" creata.` + (lib.count ? ` ${lib.count} elementi trovati.` : ' Ora carica i tuoi file.'))
+      setForm({ name: '', type: 'mixed', category: 'serie', path: '' })
+      setMsg(`Libreria "${lib.name}" creata.` + (lib.count ? ` ${lib.count} elementi.` : ' Ora carica i tuoi file.'))
       load()
-    } catch (err) {
-      setMsg(err.message)
-    } finally {
-      setBusy(false)
-    }
+    } catch (err) { setMsg(err.message) } finally { setBusy(false) }
   }
 
   const onFilesPicked = async (libId, fileList) => {
-    const files = Array.from(fileList)
-    let ok = 0
-    const errors = []
+    const files = Array.from(fileList); let ok = 0; const errors = []
     for (const file of files) {
-      if (file.size > maxUploadMb * 1024 * 1024) {
-        errors.push(`${file.name}: supera ${maxUploadMb} MB`)
-        continue
-      }
+      if (file.size > maxUploadMb * 1024 * 1024) { errors.push(`${file.name}: supera ${maxUploadMb} MB`); continue }
       setUploads((u) => ({ ...u, [libId]: { name: file.name, percent: 0, phase: 'upload' } }))
       try {
-        await uploadFile(file, libId, (percent, phase) =>
-          setUploads((u) => ({ ...u, [libId]: { name: file.name, percent, phase } }))
-        )
+        await uploadFile(file, libId, (percent, phase) => setUploads((u) => ({ ...u, [libId]: { name: file.name, percent, phase } })))
         ok++
-      } catch (err) {
-        errors.push(`${file.name}: ${err.message}`)
-      }
+      } catch (err) { errors.push(`${file.name}: ${err.message}`) }
     }
     setUploads((u) => { const c = { ...u }; delete c[libId]; return c })
-    setMsg(
-      errors.length
-        ? `Completato: ${ok} caricati, ${errors.length} falliti. ${errors.join(' · ')}`
-        : `Completato: ${ok} file caricati.`
-    )
+    setMsg(errors.length ? `Completato: ${ok} caricati, ${errors.length} falliti. ${errors.join(' · ')}` : `Completato: ${ok} file caricati.`)
     load()
   }
 
   const scan = async (id) => {
-    setMsg('Scansione in corso…')
-    try {
-      const lib = await api.post(`/libraries/${id}/scan`)
-      setMsg(`Scansione completata: ${lib.count} elementi.`)
-      load()
-    } catch (e) { setMsg(e.message) }
+    setMsg('Scansione…')
+    try { const lib = await api.post(`/libraries/${id}/scan`); setMsg(`Scansione completata: ${lib.count} elementi.`); load() } catch (e) { setMsg(e.message) }
   }
-
   const remove = async (id) => {
     if (!confirm('Eliminare questa libreria e i file caricati?')) return
-    await api.del('/libraries/' + id)
-    load()
+    await api.del('/libraries/' + id); load()
   }
 
+  const input = 'w-full bg-ink-800/70 rounded-xl px-3 py-2.5 outline-none border border-brand-500/20 focus:border-brand-500 focus:shadow-neon-sm transition'
+
   return (
-    <div className="max-w-2xl">
-      <h1 className="text-2xl font-bold mb-6">Le mie librerie</h1>
+    <div className="max-w-2xl animate-fadeup">
+      <h1 className="font-display text-2xl md:text-3xl font-black mb-6 neon-text">Le mie librerie</h1>
 
       {demo && (
-        <div className="mb-6 rounded-lg bg-brand-600/15 ring-1 ring-brand-500/30 p-4 text-sm text-zinc-300">
-          Sei nella <span className="font-semibold text-brand-300">demo pubblica</span>: librerie in sola lettura.
+        <div className="mb-6 rounded-2xl glass p-4 text-sm text-brand-100/80">
+          Sei nella <span className="font-semibold text-neon-pink">demo pubblica</span>: librerie in sola lettura.
         </div>
       )}
 
-      <form onSubmit={addLibrary} className="bg-white/5 rounded-lg p-4 mb-6 space-y-3 ring-1 ring-white/10">
-        <div className="font-semibold">Crea una libreria</div>
-        <input
-          required
-          value={form.name}
-          onChange={(e) => setForm({ ...form, name: e.target.value })}
-          placeholder="Nome (es. Film, Le mie serie)"
-          className="w-full bg-white/10 rounded px-3 py-2 outline-none focus:ring-2 focus:ring-brand-500"
-        />
-        <select
-          value={form.type}
-          onChange={(e) => setForm({ ...form, type: e.target.value })}
-          className="w-full bg-white/10 rounded px-3 py-2 outline-none"
-        >
-          <option value="mixed">Misto (rileva automaticamente)</option>
-          <option value="movie">Film</option>
-          <option value="show">Serie TV</option>
-        </select>
+      <form onSubmit={addLibrary} className="glass rounded-2xl p-5 mb-6 space-y-3">
+        <div className="font-display font-bold flex items-center gap-2"><Icon name="plus" size={18} className="text-brand-400" /> Crea una libreria</div>
+        <input required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Nome (es. I miei anime)" className={input} />
+        <div className="grid grid-cols-2 gap-3">
+          <select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} className={input}>
+            {CATEGORIES.map((c) => <option key={c.key} value={c.key}>{c.label}</option>)}
+          </select>
+          <select value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value })} className={input}>
+            <option value="mixed">Rileva automaticamente</option>
+            <option value="movie">Film singoli</option>
+            <option value="show">Serie a episodi</option>
+          </select>
+        </div>
 
-        <button type="button" onClick={() => setShowAdvanced((v) => !v)} className="text-xs text-zinc-400 hover:text-white">
-          {showAdvanced ? '− Nascondi opzioni avanzate' : '+ Opzioni avanzate (self-host)'}
+        <button type="button" onClick={() => setShowAdvanced((v) => !v)} className="text-xs text-brand-200/50 hover:text-white transition">
+          {showAdvanced ? '− Nascondi avanzate' : '+ Opzioni avanzate (self-host)'}
         </button>
         {showAdvanced && (
-          <input
-            value={form.path}
-            onChange={(e) => setForm({ ...form, path: e.target.value })}
-            placeholder="Percorso cartella locale (solo self-host con ALLOW_LOCAL_SCAN=true)"
-            className="w-full bg-white/10 rounded px-3 py-2 outline-none focus:ring-2 focus:ring-brand-500 font-mono text-sm"
-          />
+          <input value={form.path} onChange={(e) => setForm({ ...form, path: e.target.value })} placeholder="Percorso locale (solo self-host con ALLOW_LOCAL_SCAN=true)" className={`${input} font-mono text-sm`} />
         )}
 
-        <button disabled={busy} className="bg-brand-600 hover:bg-brand-500 px-4 py-2 rounded font-semibold disabled:opacity-50">
+        <button disabled={busy} className="btn-neon disabled:opacity-50">
           {busy ? 'Creazione…' : 'Crea libreria'}
         </button>
       </form>
 
-      {msg && <p className="text-sm text-brand-400 mb-4">{msg}</p>}
+      {msg && <p className="text-sm text-brand-300 mb-4">{msg}</p>}
+      {!demo && <p className="text-xs text-brand-200/40 mb-3">Caricamento: max {maxUploadMb} MB per file.</p>}
 
-      {!demo && (
-        <p className="text-xs text-zinc-500 mb-2">Caricamento: max {maxUploadMb} MB per file (piano gratuito).</p>
-      )}
-
-      <div className="space-y-2">
+      <div className="space-y-3">
         {libs.map((l) => (
-          <div key={l.id} className="bg-white/5 rounded-lg px-4 py-3 ring-1 ring-white/10">
+          <div key={l.id} className="glass rounded-2xl px-4 py-3.5 hover:shadow-neon-sm transition">
             <div className="flex items-center gap-3">
+              <span className="w-10 h-10 rounded-xl flex items-center justify-center text-brand-300 bg-brand-500/10 ring-1 ring-brand-500/20">
+                <Icon name={catIcon(l.category)} size={20} />
+              </span>
               <div className="flex-1 min-w-0">
-                <div className="font-semibold">{l.name}</div>
-                <div className="text-xs text-zinc-400">
-                  {l.type === 'movie' ? 'Film' : l.type === 'show' ? 'Serie TV' : 'Misto'}
-                  {l.path ? ` · ${l.path}` : ''}
-                </div>
+                <div className="font-semibold truncate">{l.name}</div>
+                <div className="text-xs text-brand-200/50">{catLabel(l.category)}{l.path ? ` · ${l.path}` : ''}</div>
               </div>
-              <span className="text-sm text-zinc-400 whitespace-nowrap">{l.count} elementi</span>
+              <span className="text-sm text-brand-200/50 whitespace-nowrap">{l.count} elementi</span>
               {!demo && (
                 <>
-                  <input
-                    type="file"
-                    multiple
-                    accept="video/*,.mkv,.avi"
-                    className="hidden"
-                    ref={(el) => (fileInputs.current[l.id] = el)}
-                    onChange={(e) => onFilesPicked(l.id, e.target.files)}
-                  />
-                  <button
-                    onClick={() => fileInputs.current[l.id]?.click()}
-                    className="text-sm bg-brand-600 hover:bg-brand-500 px-3 py-1.5 rounded font-semibold"
-                  >
-                    ＋ Carica file
+                  <input type="file" multiple accept="video/*,.mkv,.avi" className="hidden" ref={(el) => (fileInputs.current[l.id] = el)} onChange={(e) => onFilesPicked(l.id, e.target.files)} />
+                  <button onClick={() => fileInputs.current[l.id]?.click()} className="btn-neon text-sm px-3 py-1.5">
+                    <Icon name="upload" size={16} /> Carica
                   </button>
-                  {l.path && (
-                    <button onClick={() => scan(l.id)} className="text-sm bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded">
-                      Ri-scansiona
-                    </button>
-                  )}
-                  <button onClick={() => remove(l.id)} className="text-sm text-red-400 hover:text-red-300">Elimina</button>
+                  {l.path && <button onClick={() => scan(l.id)} className="btn-ghost text-sm px-3 py-1.5">Scansiona</button>}
+                  <button onClick={() => remove(l.id)} className="text-brand-200/40 hover:text-neon-pink transition" title="Elimina"><Icon name="trash" size={18} /></button>
                 </>
               )}
             </div>
             {uploads[l.id] && (
               <div className="mt-3">
-                <div className="text-xs text-zinc-400 mb-1 truncate">
-                  {uploads[l.id].phase === 'finalize'
-                    ? `Finalizzazione (salvataggio)… ${uploads[l.id].name}`
-                    : `Caricamento: ${uploads[l.id].name} — ${uploads[l.id].percent}%`}
+                <div className="text-xs text-brand-200/60 mb-1 truncate">
+                  {uploads[l.id].phase === 'finalize' ? `Finalizzazione (salvataggio)… ${uploads[l.id].name}` : `Caricamento: ${uploads[l.id].name} — ${uploads[l.id].percent}%`}
                 </div>
-                <div className="h-1.5 bg-white/10 rounded overflow-hidden">
-                  <div
-                    className={`h-full rounded transition-all ${uploads[l.id].phase === 'finalize' ? 'bg-brand-400 animate-pulse' : 'bg-brand-500'}`}
-                    style={{ width: `${uploads[l.id].percent}%` }}
-                  />
+                <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
+                  <div className={`h-full rounded-full transition-all ${uploads[l.id].phase === 'finalize' ? 'animate-pulse' : ''}`} style={{ width: `${uploads[l.id].percent}%`, background: 'linear-gradient(90deg,#a855f7,#ec4899)' }} />
                 </div>
               </div>
             )}
           </div>
         ))}
-        {libs.length === 0 && <p className="text-zinc-500">Nessuna libreria. Creane una qui sopra e carica i tuoi file.</p>}
+        {libs.length === 0 && <p className="text-brand-200/50">Nessuna libreria. Creane una qui sopra.</p>}
       </div>
     </div>
   )

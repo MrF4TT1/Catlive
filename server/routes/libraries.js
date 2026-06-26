@@ -38,10 +38,13 @@ r.post('/', requireAdmin, (req, res) => {
   const { name, path: dir, type } = req.body || {}
   if (!name) return res.status(400).json({ error: 'Il nome è obbligatorio' })
 
+  const CATEGORIES = ['film', 'serie', 'anime', 'altro']
+  const category = CATEGORIES.includes(req.body.category) ? req.body.category : 'altro'
   const lib = {
     id: randomUUID(),
     name: String(name).trim(),
     type: type === 'movie' ? 'movie' : type === 'show' ? 'show' : 'mixed',
+    category,
     createdAt: Date.now(),
   }
 

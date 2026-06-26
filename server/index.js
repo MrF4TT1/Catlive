@@ -13,6 +13,7 @@ import mediaRoutes from './routes/media.js'
 import streamRoutes from './routes/stream.js'
 import progressRoutes from './routes/progress.js'
 import uploadRoutes from './routes/upload.js'
+import coverRoutes from './routes/cover.js'
 import { seedDemo, seedAdminFromEnv } from './seed.js'
 import { initStore, flushDb } from './store.js'
 import { initStorage } from './storage.js'
@@ -40,6 +41,7 @@ app.use('/api/media', mediaRoutes)
 app.use('/api/stream', streamRoutes)
 app.use('/api/progress', progressRoutes)
 app.use('/api/upload', uploadRoutes)
+app.use('/api/cover', coverRoutes)
 
 // In produzione: serve la SPA compilata (se presente).
 const dist = path.join(ROOT, 'dist')
