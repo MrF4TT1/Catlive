@@ -12,7 +12,7 @@ COPY . .
 RUN npm run build
 
 ENV NODE_ENV=production
-ENV DEMO_MODE=true
+ENV DEMO_MODE=false
 # IMPORTANTE: in produzione JWT_SECRET è OBBLIGATORIO (l'app si rifiuta di partire senza).
 # Passalo a runtime, es:  docker run -e JWT_SECRET="<stringa-lunga-e-casuale>" ...
 # (su Fly.io/Railway impostalo come secret/variabile d'ambiente del servizio).
