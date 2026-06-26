@@ -6,7 +6,7 @@ import { fileURLToPath } from 'url'
 import { randomUUID } from 'crypto'
 import { loadDb, saveDb } from '../store.js'
 import { requireAuth, requireAdmin } from '../auth.js'
-import { putFile } from '../storage.js'
+import { putFile, contentTypeForKey } from '../storage.js'
 import { parseFile, parseEpisodeNumber, clean, idFor } from '../scanner.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
@@ -51,7 +51,7 @@ r.post('/', requireAdmin, upload.single('file'), async (req, res) => {
   const ext = path.extname(file.originalname).toLowerCase()
   const key = `${lib.id}/${randomUUID()}${ext}`
   try {
-    await putFile(key, file.path, file.mimetype)
+    await putFile(key, file.path, contentTypeForKey(key) || file.mimetype)
   } catch (e) {
     fs.unlink(file.path, () => {})
     console.error('[CatAlive] Upload storage error:', e)

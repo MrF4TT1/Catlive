@@ -56,7 +56,16 @@ export default function Player() {
       save(true)
       if (nextIdRef.current) navigate(`/watch/${nextIdRef.current}?parent=${parentId}`)
     }
-    const onError = () => setWarn('Impossibile riprodurre questo file nel browser (formati come .mkv/.avi richiedono transcodifica).')
+    const onError = () => {
+      const err = v.error
+      if (!err || err.code === 1) return // MEDIA_ERR_ABORTED (navigazione) → ignora
+      if (err.code === 3 || err.code === 4) {
+        // DECODE / SRC_NOT_SUPPORTED → problema di codec, non di estensione
+        setWarn('Questo file non è riproducibile nel browser. Anche se è un .mp4, il codec interno potrebbe essere H.265/HEVC (video) o AC3/DTS (audio): i browser riproducono solo MP4 H.264 + AAC oppure WebM. Riconverti il file (es. con HandBrake) in H.264/AAC.')
+      } else {
+        setWarn('Errore di rete durante la riproduzione. Riprova tra poco.')
+      }
+    }
     v.addEventListener('timeupdate', onTime)
     v.addEventListener('ended', onEnded)
     v.addEventListener('error', onError)

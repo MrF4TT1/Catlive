@@ -6,7 +6,7 @@ import { fileURLToPath } from 'url'
 import { randomUUID } from 'crypto'
 import { loadDb, saveDb } from '../store.js'
 import { requireAuth, requireAdmin } from '../auth.js'
-import { putFile, presignGet, localPath, storageMode } from '../storage.js'
+import { putFile, presignGet, localPath, storageMode, contentTypeForKey } from '../storage.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const TMP_DIR = path.resolve(__dirname, '..', '..', 'data', 'tmp')
@@ -72,7 +72,7 @@ r.post('/', requireAuth, requireAdmin, upload.single('file'), async (req, res) =
   }
   const key = `covers/${m.id}-${randomUUID()}${path.extname(file.originalname).toLowerCase()}`
   try {
-    await putFile(key, file.path, file.mimetype)
+    await putFile(key, file.path, contentTypeForKey(key) || file.mimetype)
   } catch (e) {
     fs.unlink(file.path, () => {})
     return res.status(500).json({ error: 'Errore salvataggio copertina: ' + (e.message || '') })

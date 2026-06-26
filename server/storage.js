@@ -52,6 +52,17 @@ export function storageMode() {
   return mode
 }
 
+const CONTENT_TYPES = {
+  '.mp4': 'video/mp4', '.m4v': 'video/x-m4v', '.webm': 'video/webm', '.mkv': 'video/x-matroska',
+  '.mov': 'video/quicktime', '.avi': 'video/x-msvideo', '.mpg': 'video/mpeg', '.mpeg': 'video/mpeg', '.ts': 'video/mp2t',
+  '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.png': 'image/png', '.webp': 'image/webp', '.gif': 'image/gif', '.avif': 'image/avif',
+}
+
+export function contentTypeForKey(key) {
+  const i = String(key).lastIndexOf('.')
+  return i >= 0 ? CONTENT_TYPES[key.slice(i).toLowerCase()] : undefined
+}
+
 // Le chiavi sono generate dal server, ma validiamo comunque per difesa in profondità:
 // solo caratteri sicuri e nessun segmento "..".
 function assertSafeKey(key) {
@@ -96,7 +107,12 @@ export async function putFile(key, tmpFilePath, contentType) {
 export async function presignGet(key) {
   const { GetObjectCommand } = await import('@aws-sdk/client-s3')
   const { getSignedUrl } = await import('@aws-sdk/s3-request-presigner')
-  return getSignedUrl(s3, new GetObjectCommand({ Bucket: bucket, Key: key }), { expiresIn: 3600 })
+  // Forza il Content-Type corretto nella risposta (così il browser riproduce il video
+  // anche se l'oggetto fosse stato salvato con un tipo generico).
+  const params = { Bucket: bucket, Key: key, ResponseContentDisposition: 'inline' }
+  const ct = contentTypeForKey(key)
+  if (ct) params.ResponseContentType = ct
+  return getSignedUrl(s3, new GetObjectCommand(params), { expiresIn: 3600 })
 }
 
 export async function deleteFile(key) {
