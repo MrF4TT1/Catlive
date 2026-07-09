@@ -6,6 +6,12 @@
       "runtimeExecutable": "npm",
       "runtimeArgs": ["start"],
       "port": 4000
+    },
+    {
+      "name": "catalive-dev",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev:client"],
+      "port": 5173
     }
   ]
 }

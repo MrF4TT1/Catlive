@@ -54,10 +54,33 @@ const paths = {
   check: <path d="M5 12l5 5 9-11" />,
   logout: <path d="M14 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2v-2M9 12h11m0 0-3-3m3 3-3 3" />,
   spark: <path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5 18 18M18 6l-2.5 2.5M8.5 15.5 6 18" />,
+  star: <path d="M12 3.4l2.6 5.3 5.8.9-4.2 4.1 1 5.8L12 16.8 6.8 19.5l1-5.8-4.2-4.1 5.8-.9z" />,
+  bell: (
+    <>
+      <path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" />
+      <path d="M13.7 21a2 2 0 0 1-3.4 0" />
+    </>
+  ),
+  clock: (
+    <>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 7v5l3.2 1.9" />
+    </>
+  ),
+  info: (
+    <>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 11v5M12 8h.01" />
+    </>
+  ),
+  chevronRight: <path d="M9 6l6 6-6 6" />,
+  heart: <path d="M12 20s-7-4.4-9.2-8.5C1.3 8.6 2.8 5.4 6 5.4c1.9 0 3.2 1.1 4 2.4.8-1.3 2.1-2.4 4-2.4 3.2 0 4.7 3.2 3.2 6.1C19 15.6 12 20 12 20z" />,
+  trending: <path d="M3 17l6-6 4 4 7-8M21 7h-5m5 0v5" />,
+  bookmark: <path d="M6 4h12v16l-6-4-6 4z" />,
 }
 
 export default function Icon({ name, size = 22, className = '', strokeWidth = 1.8, fill = false }) {
-  const isFill = fill || name === 'play' || name === 'anime'
+  const isFill = fill || name === 'play' || name === 'anime' || name === 'star' || name === 'heart'
   return (
     <svg
       width={size}

@@ -12,6 +12,10 @@ body,
   height: 100%;
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
 body {
   margin: 0;
   color: #f3e9ff;
@@ -96,4 +100,122 @@ h3 {
 
 ::selection {
   background: rgba(236, 72, 153, 0.4);
+}
+
+/* ==================================================================== */
+/* Layer premium — landing & dashboard cinematici (brief 2026)          */
+/* ==================================================================== */
+@layer components {
+  .font-hero {
+    font-family: 'Space Grotesk', 'Rajdhani', ui-sans-serif, system-ui, sans-serif;
+    letter-spacing: -0.02em;
+  }
+
+  /* Testo con gradiente viola→lilla, per titoli enormi */
+  .text-gradient {
+    background: linear-gradient(115deg, #E9D5FF 0%, #c084fc 38%, #a855f7 66%, #7B2CFF 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  /* Vetro premium — più profondo del .glass base */
+  .glass-panel {
+    background: linear-gradient(160deg, rgba(26, 15, 46, 0.62), rgba(9, 6, 18, 0.5));
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    border: 1px solid rgba(168, 85, 247, 0.16);
+  }
+
+  /* Pulsante PRIMARIO: viola acceso, glow dinamico, leggero effetto 3D */
+  .btn-primary {
+    @apply relative inline-flex items-center justify-center gap-2 rounded-2xl px-6 py-3 font-semibold text-white transition-all duration-300;
+    background: linear-gradient(135deg, #7B2CFF 0%, #a855f7 52%, #c084fc 100%);
+    box-shadow: 0 12px 32px -10px rgba(123, 44, 255, 0.7), 0 0 22px rgba(168, 85, 247, 0.5),
+      inset 0 1px 0 rgba(255, 255, 255, 0.28);
+  }
+  .btn-primary:hover {
+    transform: translateY(-2px);
+    filter: brightness(1.08);
+    box-shadow: 0 18px 44px -10px rgba(123, 44, 255, 0.85), 0 0 44px rgba(192, 132, 252, 0.7),
+      inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  }
+  .btn-primary:active {
+    transform: translateY(0);
+  }
+
+  /* Pulsante SECONDARIO: vetro trasparente, bordo viola, blur */
+  .btn-secondary {
+    @apply relative inline-flex items-center justify-center gap-2 rounded-2xl px-6 py-3 font-semibold text-white transition-all duration-300;
+    background: rgba(168, 85, 247, 0.08);
+    border: 1px solid rgba(192, 132, 252, 0.32);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+  }
+  .btn-secondary:hover {
+    background: rgba(168, 85, 247, 0.16);
+    border-color: rgba(192, 132, 252, 0.72);
+    box-shadow: 0 0 28px rgba(168, 85, 247, 0.4);
+  }
+
+  /* Badge NEW neon (viola, in palette) */
+  .badge-new {
+    @apply text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-md text-white;
+    background: linear-gradient(120deg, #7B2CFF, #a855f7);
+    box-shadow: 0 0 14px rgba(168, 85, 247, 0.7);
+  }
+
+  /* Linea luminosa sottile (footer / separatori) */
+  .glow-divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(168, 85, 247, 0.7), transparent);
+  }
+}
+
+/* Focus visibile e in-palette per navigazione da tastiera (WCAG 2.4.7) */
+:focus-visible {
+  outline: 2px solid #c084fc;
+  outline-offset: 2px;
+}
+.btn-primary:focus-visible,
+.btn-secondary:focus-visible,
+.btn-neon:focus-visible,
+.btn-ghost:focus-visible {
+  outline: 2px solid #e9d5ff;
+  outline-offset: 3px;
+  box-shadow: 0 0 0 4px rgba(192, 132, 252, 0.4);
+}
+
+/* Nasconde la scrollbar mantenendo lo scroll (righe mobile) */
+.hide-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Grana cinematografica leggera per gli hero */
+.grain::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.5;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.35'/%3E%3C/svg%3E");
+}
+
+/* Rispetta chi preferisce meno movimento */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
 }

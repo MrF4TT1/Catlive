@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import { api } from '../api.js'
 import { useAuth } from '../context/AuthContext.jsx'
 import { AuthShell, Field } from '../components/auth-ui.jsx'
+import Icon from '../components/Icon.jsx'
 
 export default function Login() {
   const { refresh } = useAuth()
@@ -67,6 +68,13 @@ export default function Login() {
           {busy ? 'Accesso…' : 'Accedi'}
         </button>
       </form>
+
+      <Link
+        to="/"
+        className="mt-5 flex items-center justify-center gap-1.5 text-xs text-brand-200/60 hover:text-white transition-colors"
+      >
+        <Icon name="back" size={14} /> Torna alla home
+      </Link>
     </AuthShell>
   )
 }

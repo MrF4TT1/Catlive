@@ -3,6 +3,7 @@ import { useAuth } from './context/AuthContext.jsx'
 import Layout from './components/Layout.jsx'
 import Setup from './pages/Setup.jsx'
 import Login from './pages/Login.jsx'
+import Landing from './pages/Landing.jsx'
 import Profiles from './pages/Profiles.jsx'
 import Browse from './pages/Browse.jsx'
 import Search from './pages/Search.jsx'
@@ -22,7 +23,9 @@ export default function App() {
     return (
       <Routes>
         <Route path="/setup" element={<Setup />} />
-        <Route path="*" element={<Login />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/" element={<Landing />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     )
   }
